@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --sidebar-width: 240px;
+    --topbar-height: 56px;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0a0f0d;
+    color: #e8f0eb;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #263228; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3de4aa40; }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface-2 border border-surface-4 rounded-xl;
+  }
+
+  .btn-primary {
+    @apply bg-brand-500 hover:bg-brand-400 text-surface-0 font-medium
+           px-4 py-2 rounded-lg transition-all duration-150 text-sm
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-surface-3 text-slate-400 hover:text-white
+           px-3 py-2 rounded-lg transition-all duration-150 text-sm;
+  }
+
+  .btn-danger {
+    @apply bg-red-500/10 hover:bg-red-500/20 text-red-400
+           px-4 py-2 rounded-lg transition-all duration-150 text-sm border border-red-500/20;
+  }
+
+  .input {
+    @apply w-full bg-surface-1 border border-surface-4 rounded-lg
+           px-3 py-2 text-sm text-white placeholder-slate-500
+           focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20
+           transition-all duration-150;
+  }
+
+  .badge-online  { @apply inline-flex items-center gap-1 text-xs bg-brand-500/15 text-brand-400 border border-brand-500/20 px-2 py-0.5 rounded-full; }
+  .badge-offline { @apply inline-flex items-center gap-1 text-xs bg-slate-500/15 text-slate-400 border border-slate-500/20 px-2 py-0.5 rounded-full; }
+  .badge-warning { @apply inline-flex items-center gap-1 text-xs bg-amber-500/15 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full; }
+  .badge-ai      { @apply inline-flex items-center gap-1 text-xs bg-violet-500/15 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full; }
+  .badge-human   { @apply inline-flex items-center gap-1 text-xs bg-sky-500/15 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-full; }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm
+           text-slate-400 hover:text-white hover:bg-surface-3
+           transition-all duration-150 cursor-pointer select-none;
+  }
+  .nav-item.active {
+    @apply text-brand-400 bg-brand-500/10 border border-brand-500/20;
+  }
+
+  .stat-card {
+    @apply card p-5 flex flex-col gap-1;
+  }
+}
+
+@layer utilities {
+  .safe-top    { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-left   { padding-left: env(safe-area-inset-left); }
+  .safe-right  { padding-right: env(safe-area-inset-right); }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #00c988, #3de4aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glow-brand {
+    box-shadow: 0 0 20px rgba(0, 169, 110, 0.15);
+  }
+}

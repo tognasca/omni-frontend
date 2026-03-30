@@ -1,0 +1,91 @@
+version: '3.9'
+
+# ─────────────────────────────────────────────────────────────────
+# OmniAI — Full stack: SQL Server + Redis + API .NET + Frontend React
+# Acesso: http://localhost:3000  (dashboard)
+#         http://localhost:61140  (API + Swagger)
+# ─────────────────────────────────────────────────────────────────
+
+services:
+  # ── SQL Server ──────────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: omni_sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: >
+        /opt/mssql-tools18/bin/sqlcmd
+        -S localhost -U SA -P "YourStrong!Passw0rd"
+        -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 45s
+
+  # ── Redis ───────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: omni_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── API .NET ────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: src/OmniAI.API/Dockerfile
+    container_name: omni_api
+    ports:
+      - "61140:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=OmniAI;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=True;Connection Timeout=30;"
+      OpenAI__ApiKey: "${OPENAI_API_KEY:-sk-placeholder}"
+      WhatsApp__VerifyToken: "omni_verify_dev"
+      Encryption__Key: "p4Gx7l/cVaq61RESHv+lxefyG/XNSF0wg5/0jhCAtkc="
+      Encryption__IV: "tyW8QS8T8YHO/LdGuwks8Q=="
+      Auth__Authority: ""
+      Auth__Audience: "omni-ai-api"
+      # Permite o frontend fazer requisições cross-origin
+      Cors__Origins__0: "http://localhost:3000"
+      Cors__Origins__1: "http://localhost:80"
+    volumes:
+      - dataprotection_keys:/app/keys
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: on-failure:5
+
+  # ── Frontend React ──────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./omni-frontend
+      dockerfile: Dockerfile
+    container_name: omni_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+  redis_data:
+  dataprotection_keys:

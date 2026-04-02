@@ -28,12 +28,12 @@ npm install
 cp .env.example .env
 # Edite VITE_TENANT_ID com o ID do tenant criado pelo seed
 
-# 3. Iniciar (a API precisa estar rodando em localhost:61140)
+# 3. Iniciar (a API precisa estar rodando em localhost:90)
 npm run dev
 # Abre em: http://localhost:3000
 ```
 
-O Vite faz proxy automático de `/api` e `/hubs` para `http://localhost:61140`.
+O Vite faz proxy automático de `/api` e `/hubs` para `https://chatboxapi.ademartognasca.com.br`.
 
 ## Build para produção
 
@@ -53,7 +53,7 @@ docker-compose -f omni-frontend/docker-compose-fullstack.yml up --build -d
 
 # Acessos:
 # Dashboard: http://localhost:3000
-# API/Swagger: http://localhost:61140
+# API/Swagger: https://chatboxapi.ademartognasca.com.br
 ```
 
 ## Instalar como PWA (smartphone)

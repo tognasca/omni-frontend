@@ -10,9 +10,9 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': { target: 'http://localhost:61140', changeOrigin: true },
-      '/hubs': { target: 'http://localhost:61140', ws: true, changeOrigin: true },
-      '/swagger': { target: 'http://localhost:61140', changeOrigin: true }
+      '/api': { target: 'https://chatboxapi.ademartognasca.com.br', changeOrigin: true },
+      '/hubs': { target: 'https://chatboxapi.ademartognasca.com.br', ws: true, changeOrigin: true },
+      '/swagger': { target: 'https://chatboxapi.ademartognasca.com.br', changeOrigin: true }
     }
   }
 })

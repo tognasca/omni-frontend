@@ -112,7 +112,7 @@ export function ConversationsPage() {
     queryKey: ['messages', selectedConversationId],
     queryFn:  () => selectedConversationId ? apiService.getMessages(selectedConversationId) : null,
     enabled:  !!selectedConversationId,
-    refetchInterval: 61140,
+    refetchInterval: 90,
   })
 
   const assignMutation = useMutation({

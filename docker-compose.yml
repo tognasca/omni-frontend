@@ -1,0 +1,103 @@
+services:
+  # ─────────────────────────────────────────────
+  # 🗄️ SQL SERVER
+  # ─────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: omni_sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "@Dejoia1264"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: >
+        /opt/mssql-tools18/bin/sqlcmd
+        -S localhost -U SA -P "@Dejoia1264"
+        -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  # ─────────────────────────────────────────────
+  # ⚡ REDIS
+  # ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: omni_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────
+  # 🚀 API (.NET)
+  # ─────────────────────────────────────────────
+  api:
+    build:
+      context: ../OmniAI
+      dockerfile: src/OmniAI.API/Dockerfile
+    container_name: omni_api
+    ports:
+      - "90:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+
+      ConnectionStrings__Default: "Server=tcp:sqlserver,1433;Database=OmniAI;User Id=sa;Password=@Dejoia1264;TrustServerCertificate=True;MultipleActiveResultSets=True;"
+
+      OpenAI__ApiKey: "${OPENAI_API_KEY:-sk-YOUR_OPENAI_API_KEY}"
+      OpenAI__Model: "gpt-4o"
+      OpenAI__MaxTokens: "1000"
+
+      WhatsApp__VerifyToken: "omni_whatsapp_verify_2026_CHANGE_ME"
+
+      Encryption__Key: "p4Gx7l/cVaq61RESHv+lxefyG/XNSF0wg5/0jhCAtkc="
+      Encryption__IV: "tyW8QS8T8YHO/LdGuwks8Q=="
+
+      Auth__Authority: ""
+      Auth__Audience: "omni-ai-api"
+
+      Cors__Origins__0: "http://localhost:3000"
+      Cors__Origins__1: "http://localhost:5173"
+
+    volumes:
+      - dataprotection_keys:/app/keys
+      - api_logs:/app/logs
+
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    restart: on-failure:5
+
+  # ─────────────────────────────────────────────
+  # 🌐 FRONTEND
+  # ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omni_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+  redis_data:
+  dataprotection_keys:
+  api_logs:

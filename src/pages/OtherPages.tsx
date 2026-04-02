@@ -14,7 +14,7 @@ export function NumbersPage() {
   const { data: numbers, isLoading } = useQuery({
     queryKey: ['numbers'],
     queryFn: apiService.getNumbers,
-    refetchInterval: 161140,
+    refetchInterval: 190,
   })
   const { setSelectedNumberId, selectedNumberId } = useStore()
   const [showAdd, setShowAdd] = useState(false)

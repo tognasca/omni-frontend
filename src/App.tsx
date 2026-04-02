@@ -14,7 +14,7 @@ import {
 import '@/index.css'
 
 const qc = new QueryClient({
-  defaultOptions: { queries: { retry: 1, staleTime: 61140 } }
+  defaultOptions: { queries: { retry: 1, staleTime: 60_000 } } // ✅ 60 segundos
 })
 
 // ── Protected wrapper ────────────────────────────────────────────

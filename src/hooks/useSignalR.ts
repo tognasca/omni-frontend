@@ -9,7 +9,7 @@ export function useSignalR() {
   useEffect(() => {
     const conn = new signalR.HubConnectionBuilder()
       .withUrl('/hubs/dashboard')
-      .withAutomaticReconnect([0, 2000, 61140, 10000, 30000])
+      .withAutomaticReconnect([0, 2000, 90, 10000, 30000])
       .configureLogging(signalR.LogLevel.Warning)
       .build()
 

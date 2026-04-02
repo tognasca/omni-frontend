@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import axios from 'axios'
+import { api } from '@/services/api'
 
 interface AuthUser {
   id:         string
@@ -18,12 +18,12 @@ interface AuthStore {
   refreshToken: string | null
   isLoading:    boolean
 
-  login:   (email: string, password: string) => Promise<void>
-  logout:  () => Promise<void>
-  refresh: () => Promise<void>
+  login:          (email: string, password: string) => Promise<void>
+  logout:         () => Promise<void>
+  refresh:        () => Promise<void>
 
-  isSuperAdmin: () => boolean
-  isAdmin:      () => boolean
+  isSuperAdmin:   () => boolean
+  isAdmin:        () => boolean
   canManageUsers: () => boolean
 }
 
@@ -36,7 +36,7 @@ export const useAuthStore = create<AuthStore>()(
       isLoading:    false,
 
       login: async (email, password) => {
-        const { data } = await axios.post('/api/auth/login', { email, password })
+        const { data } = await api.post('/auth/login', { email, password })
         set({
           accessToken:  data.accessToken,
           refreshToken: data.refreshToken,
@@ -50,27 +50,29 @@ export const useAuthStore = create<AuthStore>()(
             tenantSlug: data.tenantSlug,
           }
         })
-        // Set default auth header for all future requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`
+        // ✅ Usa a instância api, não o axios global
+        api.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`
       },
 
       logout: async () => {
         const { refreshToken } = get()
         if (refreshToken) {
           try {
-            await axios.post('/api/auth/logout', { refreshToken })
+            await api.post('/auth/logout', { refreshToken })
           } catch { /* ignore */ }
         }
-        delete axios.defaults.headers.common['Authorization']
+        // ✅ Remove o header da instância api
+        delete api.defaults.headers.common['Authorization']
         set({ user: null, accessToken: null, refreshToken: null })
       },
 
       refresh: async () => {
         const { refreshToken } = get()
         if (!refreshToken) throw new Error('No refresh token')
-        const { data } = await axios.post('/api/auth/refresh', { refreshToken })
+        const { data } = await api.post('/auth/refresh', { refreshToken })
         set({ accessToken: data.accessToken, refreshToken: data.refreshToken })
-        axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`
+        // ✅ Usa a instância api, não o axios global
+        api.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`
       },
 
       isSuperAdmin:   () => get().user?.role === 'SuperAdmin',
@@ -79,16 +81,15 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'omni-auth',
-      // Only persist tokens and user, not loading state
       partialize: (s) => ({
         user:         s.user,
         accessToken:  s.accessToken,
         refreshToken: s.refreshToken,
       }),
       onRehydrateStorage: () => (state) => {
-        // Restore auth header on page reload
+        // ✅ Restaura o header na instância api ao recarregar a página
         if (state?.accessToken) {
-          axios.defaults.headers.common['Authorization'] =
+          api.defaults.headers.common['Authorization'] =
             `Bearer ${state.accessToken}`
         }
       }

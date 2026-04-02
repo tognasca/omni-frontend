@@ -15,9 +15,29 @@ api.interceptors.response.use(
 )
 
 // ── Tenant resolution ──────────────────────────────────────────────
-// Se VITE_TENANT_ID não estiver configurado, usa Guid.Empty.
-// O backend detecta Guid.Empty e resolve o primeiro tenant ativo automaticamente.
 export const TENANT_ID = import.meta.env.VITE_TENANT_ID ?? '00000000-0000-0000-0000-000000000000'
+
+// ── Enum maps (frontend string → backend int) ──────────────────────
+const TriggerTypeMap: Record<string, number> = {
+  Keyword:       0,
+  IntentPattern: 1,
+  Regex:         2,
+}
+
+const TriggerPriorityMap: Record<string, number> = {
+  Low:      0,
+  Medium:   1,
+  High:     2,
+  Critical: 3,
+}
+
+const ConversationStatusMap: Record<string, number> = {
+  Open:         0,
+  WaitingHuman: 1,
+  InProgress:   2,
+  Resolved:     3,
+  Abandoned:    4,
+}
 
 // ── Types ──────────────────────────────────────────────────────────
 export interface Tenant {
@@ -145,8 +165,6 @@ export const apiService = {
     accessToken: string
     verifyToken: string
   }) =>
-    // Send tenantId = TENANT_ID. If it's Guid.Empty, the backend
-    // automatically resolves the first active tenant.
     api.post<WhatsAppNumber>('/numbers', {
       tenantId:      TENANT_ID,
       displayName:   data.displayName,
@@ -159,7 +177,13 @@ export const apiService = {
   // Conversations
   getConversations: (status?: string, page = 1) =>
     api.get<PagedResult<Conversation>>('/conversations', {
-      params: { tenantId: TENANT_ID, status, page, pageSize: 20 }
+      params: {
+        tenantId: TENANT_ID,
+        // ✅ converte status string → int antes de enviar
+        status: status != null ? ConversationStatusMap[status] ?? status : undefined,
+        page,
+        pageSize: 20,
+      }
     }).then(r => r.data),
 
   getMessages: (conversationId: string, page = 1) =>
@@ -202,7 +226,20 @@ export const apiService = {
     api.get<HandoffTrigger[]>(`/handoff-triggers/${numberId}`).then(r => r.data),
 
   saveTrigger: (trigger: Partial<HandoffTrigger> & { whatsAppNumberId: string }) =>
-    api.put<HandoffTrigger>('/handoff-triggers', trigger).then(r => r.data),
+    api.put<HandoffTrigger>('/handoff-triggers', {
+      id:               trigger.id ?? null,
+      whatsAppNumberId: trigger.whatsAppNumberId,
+      // ✅ converte string → int para o backend .NET
+      triggerType: typeof trigger.triggerType === 'string'
+        ? TriggerTypeMap[trigger.triggerType] ?? 0
+        : trigger.triggerType,
+      value:    trigger.value,
+      priority: typeof trigger.priority === 'string'
+        ? TriggerPriorityMap[trigger.priority] ?? 0
+        : trigger.priority,
+      isActive:      trigger.isActive ?? true,
+      transitionMsg: (trigger as any).transitionMsg ?? null,
+    }).then(r => r.data),
 
   deleteTrigger: (triggerId: string) =>
     api.delete(`/handoff-triggers/${triggerId}`),

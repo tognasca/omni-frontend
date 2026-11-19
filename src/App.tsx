@@ -11,6 +11,7 @@ import {
   NumbersPage, KnowledgePage, TriggersPage,
   SettingsPage, MetricsPage
 } from '@/pages/OtherPages'
+import { WhatsAppSignupPreview } from '@/components/WhatsAppSignupPreview'
 import '@/index.css'
 
 const qc = new QueryClient({
@@ -30,6 +31,11 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function SignupPreviewForAdmin() {
+  const { isAdmin } = useAuthStore()
+  return isAdmin() ? <WhatsAppSignupPreview /> : null
+}
+
 // ── App shell ────────────────────────────────────────────────────
 function AppShell() {
   useSignalR()
@@ -40,7 +46,7 @@ function AppShell() {
         <Routes>
           <Route path="/"              element={<DashboardPage />} />
           <Route path="/conversations" element={<ConversationsPage />} />
-          <Route path="/numbers"       element={<NumbersPage />} />
+          <Route path="/numbers"       element={<div className="flex h-full flex-col"><SignupPreviewForAdmin /><div className="min-h-0 flex-1 overflow-auto"><NumbersPage /></div></div>} />
           <Route path="/knowledge"     element={<KnowledgePage />} />
           <Route path="/triggers"      element={<TriggersPage />} />
           <Route path="/metrics"       element={<MetricsPage />} />

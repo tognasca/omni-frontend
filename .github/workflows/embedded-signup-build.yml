@@ -1,7 +1,7 @@
 name: Embedded Signup build
 on:
   push:
-    branches: [feature/omni-embedded-signup, feature/omni-ai-operations]
+    branches: [main, feature/omni-embedded-signup, feature/omni-ai-operations]
   pull_request:
 permissions:
   contents: read

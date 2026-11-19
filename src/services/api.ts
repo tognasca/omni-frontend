@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' }
 })
@@ -15,7 +15,16 @@ api.interceptors.response.use(
 )
 
 // ── Tenant resolution ──────────────────────────────────────────────
-export const TENANT_ID = import.meta.env.VITE_TENANT_ID ?? '00000000-0000-0000-0000-000000000000'
+let activeTenantId: string | null = null
+
+export function setApiTenant(tenantId: string | null) {
+  activeTenantId = tenantId
+}
+
+export function requireApiTenant() {
+  if (!activeTenantId) throw new Error('Sessão sem empresa ativa.')
+  return activeTenantId
+}
 
 // ── Enum maps (frontend string → backend int) ──────────────────────
 const TriggerTypeMap: Record<string, number> = {
@@ -149,13 +158,13 @@ export const apiService = {
   // Dashboard
   getMetrics: (from?: string, to?: string) =>
     api.get<DashboardMetrics>('/metrics/dashboard', {
-      params: { tenantId: TENANT_ID, from, to }
+      params: { tenantId: requireApiTenant(), from, to }
     }).then(r => r.data),
 
   // Numbers
   getNumbers: () =>
     api.get<WhatsAppNumber[]>('/numbers', {
-      params: { tenantId: TENANT_ID }
+      params: { tenantId: requireApiTenant() }
     }).then(r => r.data),
 
   addNumber: (data: {
@@ -166,7 +175,7 @@ export const apiService = {
     verifyToken: string
   }) =>
     api.post<WhatsAppNumber>('/numbers', {
-      tenantId:      TENANT_ID,
+      tenantId:      requireApiTenant(),
       displayName:   data.displayName,
       phoneNumberId: data.phoneNumberId,
       wabaId:        data.wabaId,
@@ -178,7 +187,7 @@ export const apiService = {
   getConversations: (status?: string, page = 1) =>
     api.get<PagedResult<Conversation>>('/conversations', {
       params: {
-        tenantId: TENANT_ID,
+        tenantId: requireApiTenant(),
         // ✅ converte status string → int antes de enviar
         status: status != null ? ConversationStatusMap[status] ?? status : undefined,
         page,

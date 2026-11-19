@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -14,9 +15,6 @@ import {
 import { WhatsAppSignupPreview } from '@/components/WhatsAppSignupPreview'
 import '@/index.css'
 
-const qc = new QueryClient({
-  defaultOptions: { queries: { retry: 1, staleTime: 60_000 } } // ✅ 60 segundos
-})
 
 // ── Protected wrapper ────────────────────────────────────────────
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -60,8 +58,10 @@ function AppShell() {
 }
 
 export default function App() {
+  const session = useAuthStore(state => state.user ? state.user.id + ':' + state.user.tenantId : 'anonymous')
+  const qc = useMemo(() => new QueryClient(), [session])
   return (
-    <QueryClientProvider client={qc}>
+    <QueryClientProvider key={session} client={qc}>
       <BrowserRouter>
         <Routes>
           {/* Login — público */}

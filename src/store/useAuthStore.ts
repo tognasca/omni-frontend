@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { api } from '@/services/api'
+import { api, setApiTenant } from '@/services/api'
 
 interface AuthUser {
   id:         string
@@ -37,6 +37,7 @@ export const useAuthStore = create<AuthStore>()(
 
       login: async (email, password) => {
         const { data } = await api.post('/auth/login', { email, password })
+        setApiTenant(data.tenantId)
         set({
           accessToken:  data.accessToken,
           refreshToken: data.refreshToken,
@@ -63,6 +64,7 @@ export const useAuthStore = create<AuthStore>()(
         }
         // ✅ Remove o header da instância api
         delete api.defaults.headers.common['Authorization']
+        setApiTenant(null)
         set({ user: null, accessToken: null, refreshToken: null })
       },
 
@@ -88,6 +90,7 @@ export const useAuthStore = create<AuthStore>()(
       }),
       onRehydrateStorage: () => (state) => {
         // ✅ Restaura o header na instância api ao recarregar a página
+        setApiTenant(state?.user?.tenantId ?? null)
         if (state?.accessToken) {
           api.defaults.headers.common['Authorization'] =
             `Bearer ${state.accessToken}`

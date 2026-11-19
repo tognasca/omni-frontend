@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -11,11 +12,9 @@ import {
   NumbersPage, KnowledgePage, TriggersPage,
   SettingsPage, MetricsPage
 } from '@/pages/OtherPages'
+import { WhatsAppSignupPreview } from '@/components/WhatsAppSignupPreview'
 import '@/index.css'
 
-const qc = new QueryClient({
-  defaultOptions: { queries: { retry: 1, staleTime: 60_000 } } // ✅ 60 segundos
-})
 
 // ── Protected wrapper ────────────────────────────────────────────
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -30,6 +29,11 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function SignupPreviewForAdmin() {
+  const { isAdmin } = useAuthStore()
+  return isAdmin() ? <WhatsAppSignupPreview /> : null
+}
+
 // ── App shell ────────────────────────────────────────────────────
 function AppShell() {
   useSignalR()
@@ -40,7 +44,7 @@ function AppShell() {
         <Routes>
           <Route path="/"              element={<DashboardPage />} />
           <Route path="/conversations" element={<ConversationsPage />} />
-          <Route path="/numbers"       element={<NumbersPage />} />
+          <Route path="/numbers"       element={<div className="flex h-full flex-col"><SignupPreviewForAdmin /><div className="min-h-0 flex-1 overflow-auto"><NumbersPage /></div></div>} />
           <Route path="/knowledge"     element={<KnowledgePage />} />
           <Route path="/triggers"      element={<TriggersPage />} />
           <Route path="/metrics"       element={<MetricsPage />} />
@@ -54,8 +58,10 @@ function AppShell() {
 }
 
 export default function App() {
+  const session = useAuthStore(state => state.user ? state.user.id + ':' + state.user.tenantId : 'anonymous')
+  const qc = useMemo(() => new QueryClient(), [session])
   return (
-    <QueryClientProvider client={qc}>
+    <QueryClientProvider key={session} client={qc}>
       <BrowserRouter>
         <Routes>
           {/* Login — público */}

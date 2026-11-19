@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiService, type KnowledgeSource, type HandoffTrigger, type BotConfig } from '@/services/api'
+import { requireApiTenant, apiService, type KnowledgeSource, type HandoffTrigger, type BotConfig } from '@/services/api'
 import { TopBar } from '@/components/layout/TopBar'
 import { useStore } from '@/store/useStore'
 import {
@@ -91,7 +91,7 @@ function AddNumberForm({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({
     displayName: '', phoneNumberId: '', wabaId: '',
     accessToken: '', verifyToken: 'omni_verify_dev',
-    tenantId: import.meta.env.VITE_TENANT_ID ?? '00000000-0000-0000-0000-000000000000',
+    tenantId: requireApiTenant(),
   })
 
   const mutation = useMutation({
@@ -427,6 +427,8 @@ export function SettingsPage() {
             <select className="input text-sm" value={merged.aiModel ?? 'gpt-4o'} onChange={e => setForm(f => ({ ...f, aiModel: e.target.value }))}>
               <option value="gpt-4o">GPT-4o (recomendado)</option>
               <option value="gpt-4o-mini">GPT-4o Mini (econômico)</option>
+              <option value="claude-haiku-5-5">Claude Haiku 5.5</option>
+              <option value="claude-sonnet-5-5">Claude Sonnet 5.5</option>
             </select>
           </div>
 

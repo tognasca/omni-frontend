@@ -1,15 +1,22 @@
 import { useEffect, useRef } from 'react'
 import * as signalR from '@microsoft/signalr'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useStore } from '@/store/useStore'
 
 export function useSignalR() {
   const connectionRef = useRef<signalR.HubConnection | null>(null)
   const { addRealtimeMessage, updateConversationStatus, addHandoffAlert } = useStore()
 
+  const userId = useAuthStore((state) => state.user?.id)
+  const tenantId = useAuthStore((state) => state.user?.tenantId)
+
   useEffect(() => {
+    if (!userId || !tenantId) return
     const conn = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/dashboard')
-      .withAutomaticReconnect([0, 2000, 90, 10000, 30000])
+      .withUrl('/hubs/dashboard', {
+        accessTokenFactory: () => useAuthStore.getState().accessToken ?? '',
+      })
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .configureLogging(signalR.LogLevel.Warning)
       .build()
 
@@ -48,8 +55,11 @@ export function useSignalR() {
       Notification.requestPermission()
     }
 
-    return () => { conn.stop() }
-  }, [addRealtimeMessage, updateConversationStatus, addHandoffAlert])
+    return () => {
+      connectionRef.current = null
+      void conn.stop()
+    }
+  }, [addRealtimeMessage, updateConversationStatus, addHandoffAlert, userId, tenantId])
 
   return connectionRef.current
 }
